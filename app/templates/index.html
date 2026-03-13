@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Company Search</title>
+    <link rel="stylesheet" href="static/css/awesomplete.min.css"/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        #company {
+        width: 400px;
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        box-sizing: border-box;
+        }
+
+        .search-wrapper {
+            position: relative;
+            width: 400px;
+        }
+
+        #search-btn {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+
+            width: 40px;
+            height: 32px;
+
+            border: none;
+            font-size: 16px;
+            border-radius: 4px;
+            background: #4CAF50;
+            color: #256d2a;
+            cursor: pointer;
+        }
+
+        #preview-wrapper {
+            width: 315px;              
+            height: 448px;
+            overflow: hidden;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        #preview-frame {
+            width: 800px;
+            height: 2000px;
+            transform: scale(0.39);
+            transform-origin: top left;
+            border: none;
+        }
+
+        .awesomplete {
+            width: 400px !important;
+        }
+
+        .awesomplete > ul {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            transition: none !important;
+        }
+
+        .awesomplete > ul::before {
+            display: none;
+        }
+
+        .awesomplete > ul li {
+            color: black !important;
+        }
+
+        .awesomplete > ul li[aria-selected="true"] {
+            background-color: rgba(200,200,200,0.4);
+            color: black;
+        }
+
+        .awesomplete > ul li[aria-selected="true"] mark {
+            background-color: yellow; 
+            color: black;
+        }
+
+        .awesomplete mark {
+            background: yellow;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+<h2>Search Company</h2>
+<div class="search-wrapper">
+    <input id="company" placeholder="Type company name or ticker"/>
+    <button id="search-btn">➔</button>
+</div>
+<div id="preview-container" style="display:none; margin-top:20px;">
+
+    <div id="preview-wrapper">
+        <iframe id="preview-frame"></iframe>
+    </div>
+
+</div>
+<a id="download-link" href="#" style="display:none;" target="_blank">
+    Download latest 10-K
+</a>
+<script src="static/js/awesomplete.min.js"></script>
+<script>
+    const input = document.getElementById("company");
+
+    // Initialize Awesomplete
+    const awesomplete = new Awesomplete(input, {
+        minChars: 2,
+        maxItems: 10,
+        autoFirst: true
+    });
+
+    // Store the mapping symbol -> company object
+    let companyMap = {};
+
+    // Fetch suggestions from backend
+    let searchTimeout = null;
+
+    input.addEventListener("input", () => {
+        const query = input.value;
+
+        if (query.length < 2) return;
+
+        // Cancel previous timer
+        clearTimeout(searchTimeout);
+
+        // Start new timer
+        searchTimeout = setTimeout(async () => {
+            const response = await fetch(`/search?query=${query}`);
+            const data = await response.json();
+
+            companyMap = {};
+            const list = data.map(c => {
+                const display = `${c.symbol} - ${c.name}`;
+                companyMap[display] = c;
+                return display;
+            });
+
+            awesomplete.list = list;
+
+        }, 400);
+    });
+
+    const button = document.getElementById("search-btn");
+    const downloadLink = document.getElementById("download-link");
+    const previewContainer = document.getElementById("preview-container");
+    const previewFrame = document.getElementById("preview-frame");
+
+    button.addEventListener("click", async() => {
+        const selectedText = input.value;
+        const company = companyMap[selectedText];
+
+        if (!company) return;
+
+        console.log("Button clicked for:", company.symbol);
+
+        const response = await fetch(`/get_10k?ticker=${company.symbol}`);
+        const data = await response.json();
+
+        if (data.download_url) {
+            downloadLink.href = data.download_url;
+            downloadLink.style.display = "block";
+            downloadLink.textContent = `Open ${company.symbol} latest 10k`
+
+            previewFrame.src = data.preview_url;
+            previewContainer.style.display = "block";
+        }
+    });
+</script>
+
+</body>
+</html>
