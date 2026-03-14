@@ -7,12 +7,14 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import requests
 import json
-import time
 from pathlib import Path
+import data_extraction
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DOWNLOAD_DIR = BASE_DIR / "downloads"
+HTML_DIR = DOWNLOAD_DIR / "html"
+GAAP_DIR = DOWNLOAD_DIR / "gaap"
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 
@@ -58,6 +60,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/downloads", StaticFiles(directory=DOWNLOAD_DIR), name="downloads")
+app.mount("/downloads/html", StaticFiles(directory=HTML_DIR), name="html")
+app.mount("/downloads/gaap", StaticFiles(directory=GAAP_DIR), name="gaap")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/", response_class=HTMLResponse)
@@ -107,46 +111,34 @@ def get_10k(ticker: str, request: Request):
 
     ticker = ticker.upper()
 
-    filepath = DOWNLOAD_DIR / f"{ticker}_10K.html"
+    ## Retrieve 10k
+ 
+    filepath_10k = HTML_DIR / f"{ticker}_10K.html"
 
     cik = request.app.state.ticker_to_cik.get(ticker)
 
     if not cik: 
         return {"error": "Ticker not found"}
     
-    submission_url = f"https://data.sec.gov/submissions/CIK{cik}.json"
+    filing_url = data_extraction.get_filing_url(cik)
 
-    r = requests.get(submission_url, headers=HEADERS_SEC)
-    data = r.json()
-    time.sleep(0.2) # SEC has a 10 requests/sec limit
-
-    filings = data["filings"]["recent"]
-
-    forms = filings["form"]
-    accessions = filings["accessionNumber"]
-    documents = filings["primaryDocument"]
-
-    accession = None
-    document = None
-
-    for i, form in enumerate(forms):
-        if form == "10-K":
-            accession = accessions[i].replace("-", "")
-            document = documents[i]
-            break
-
-    if not accession:
+    if not filing_url:
         return {"error": "10-K not found"}
-    
-    cik_no_zero = str(int(cik))
 
-    filing_url = f"https://www.sec.gov/Archives/edgar/data/{cik_no_zero}/{accession}/{document}"
+    if not filepath_10k.exists():
+        filing_response = requests.get(filing_url, headers=HEADERS_SEC)
+        filepath_10k.write_bytes(filing_response.content)
 
-    filing_response = requests.get(filing_url, headers=HEADERS_SEC)
+    ## Retrieve gaap data
 
-    if not filepath.exists():
-        with open(filepath, "wb") as f:
-            filepath.write_bytes(filing_response.content)
+    filepath_gaap = GAAP_DIR / f"{ticker}_gaap.json"
+
+    if not filepath_gaap.exists():
+        gaap = data_extraction.extract_financials(cik)
+        print("saving gaap")
+        with open(filepath_gaap, "w") as file:
+            json.dump(gaap, file, indent=4)
 
     return {"download_url": filing_url,
-            "preview_url": f"/downloads/{ticker}_10K.html"}
+            "preview_url": f"/downloads/html/{ticker}_10K.html", 
+            "gaap_url": f"downloads/gaap/{ticker}_gaap.json"}
