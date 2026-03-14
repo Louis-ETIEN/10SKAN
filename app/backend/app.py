@@ -1,9 +1,10 @@
 # main.py
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse
-from fastapi import Request
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 import requests
 import json
@@ -17,6 +18,8 @@ HTML_DIR = DOWNLOAD_DIR / "html"
 GAAP_DIR = DOWNLOAD_DIR / "gaap"
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
+
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 SEC_TICKER_URL = "https://www.sec.gov/files/company_tickers.json"
 HEADERS_SEC = {
@@ -106,8 +109,7 @@ def search_company(query: str):
 
     return results
 
-@app.get("/get_10k")
-def get_10k(ticker: str, request: Request):
+def get_10k_data(ticker: str, request: Request):
 
     ticker = ticker.upper()
 
@@ -142,3 +144,26 @@ def get_10k(ticker: str, request: Request):
     return {"download_url": filing_url,
             "preview_url": f"/downloads/html/{ticker}_10K.html", 
             "gaap_url": f"downloads/gaap/{ticker}_gaap.json"}
+
+@app.get("/company")
+async def company_page(request: Request, ticker: str = Query(None)):
+    if not ticker:
+        # Redirect to search page if no ticker
+        return RedirectResponse(url="/")
+
+    # Get all necessary links
+    data = get_10k_data(ticker, request=request)
+    if not data:
+        return f"No data found for ticker {ticker}", 404
+
+    # Render the Jinja2 template with the links and ticker embedded
+    return templates.TemplateResponse(
+        "company.html",        # your Jinja2 template
+        {
+            "request": request,
+            "ticker": ticker,
+            "preview_url": data['preview_url'],
+            "download_url": data['download_url'],
+            "gaap_url": data['gaap_url'],  # optional, in case you use it in JS
+        }
+    )
