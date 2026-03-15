@@ -3,18 +3,20 @@ TAG_MAP = {
 "income_statement": {
 
     "revenue": [
-        "Revenues",
+        "Revenues",  # most common canonical tag
         "RevenueFromContractWithCustomerExcludingAssessedTax",
-        "SalesRevenueNet"
+        "SalesRevenueNet",
+        "RevenueFromContractWithCustomerIncludingAssessedTax"
     ],
 
     "cost_of_revenue": [
         "CostOfRevenue",
-        "CostOfGoodsAndServicesSold"
+        "CostOfGoodsAndServicesSold",
+        "CostOfGoodsSold"
     ],
 
     "gross_profit": [
-        "GrossProfit"
+        "GrossProfit"  # if missing, should be computed
     ],
 
     "operating_income": [
@@ -22,22 +24,28 @@ TAG_MAP = {
     ],
 
     "net_income": [
-        "NetIncomeLoss"
+        "NetIncomeLoss",
+        "ProfitLoss"
     ]
 },
 
 "balance_sheet": {
 
     "cash": [
-        "CashAndCashEquivalentsAtCarryingValue"
+        "CashAndCashEquivalentsAtCarryingValue",
+        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"
     ],
 
     "accounts_receivable": [
-        "AccountsReceivableNetCurrent"
+        "AccountsReceivableNetCurrent",
+        "ReceivablesNetCurrent",
+        "AccountsReceivableNet"
     ],
 
     "inventory": [
-        "InventoryNet"
+        "InventoryNet",
+        "InventoriesNet",
+        "InventoryFinishedGoods"
     ],
 
     "total_assets": [
@@ -49,7 +57,9 @@ TAG_MAP = {
     ],
 
     "shareholders_equity": [
-        "StockholdersEquity"
+        "StockholdersEquity",
+        "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+        "StockholdersEquityAttributableToParent"
     ]
 
 },
@@ -57,11 +67,14 @@ TAG_MAP = {
 "cashflow_statement": {
 
     "operating_cash_flow": [
-        "NetCashProvidedByUsedInOperatingActivities"
+        "NetCashProvidedByUsedInOperatingActivities",
+        "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"
     ],
 
     "capex": [
-        "PaymentsToAcquirePropertyPlantAndEquipment"
+        "PaymentsToAcquirePropertyPlantAndEquipment",
+        "PaymentsToAcquireProductiveAssets",
+        "CapitalExpenditures"
     ]
 
 }

@@ -136,8 +136,7 @@ def get_10k_data(ticker: str, request: Request):
     filepath_gaap = GAAP_DIR / f"{ticker}_gaap.json"
 
     if not filepath_gaap.exists():
-        gaap = data_extraction.extract_financials(cik)
-        print("saving gaap")
+        gaap = data_extraction.extract_financials(ticker, cik)
         with open(filepath_gaap, "w") as file:
             json.dump(gaap, file, indent=4)
 
@@ -153,17 +152,68 @@ async def company_page(request: Request, ticker: str = Query(None)):
 
     # Get all necessary links
     data = get_10k_data(ticker, request=request)
+
     if not data:
         return f"No data found for ticker {ticker}", 404
 
     # Render the Jinja2 template with the links and ticker embedded
     return templates.TemplateResponse(
-        "company.html",        # your Jinja2 template
+        "company.html",
         {
             "request": request,
             "ticker": ticker,
             "preview_url": data['preview_url'],
             "download_url": data['download_url'],
-            "gaap_url": data['gaap_url'],  # optional, in case you use it in JS
+            "gaap_url": data['gaap_url'],
         }
     )
+    
+@app.get("/financials")
+def financials_page(request: Request, ticker: str):
+    json_path = GAAP_DIR / f"{ticker}_gaap.json"
+    if not json_path.exists():
+        return f"No financial data found for {ticker}", 404
+    
+    with open(json_path) as f:
+        data = json.load(f)
+
+    #data = format_financials(data)
+
+    return templates.TemplateResponse(
+        "financials.html",
+        {
+            "request": request,
+            "ticker": ticker,
+            "income_statement": data.get("income_statement", {}),
+            "balance_sheet": data.get("balance_sheet", {}),
+            "cashflow_statement": data.get("cashflow_statement", {}),
+            "derived_metrics": data.get("derived_metrics", {}),
+            "market_metrics": data.get("market_metrics", {}),
+        }
+    )
+
+def format_k_m(value):
+    if value is None:
+        return "N/A"
+
+    value = float(value)
+
+    if abs(value) >= 1_000_000:
+        return f"${value / 1_000_000:.0f}M"
+    elif abs(value) >= 1_000:
+        return f"${value / 1_000:.0f}M"
+    else:
+        return f"{value:.0f}"
+    
+def format_financials(data):
+    formatted = {}
+
+    for section, metrics in data.items():
+        formatted[section] = {}
+        for key, value in metrics.items():
+            if section == "derived_metrics" or section == "market_metrics":
+                formatted[section][key] = value
+            else:
+                formatted[section][key] = format_k_m(value)
+
+    return formatted
