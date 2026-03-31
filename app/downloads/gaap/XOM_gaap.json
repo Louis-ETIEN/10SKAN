@@ -1,0 +1,442 @@
+{
+    "2025": {
+        "income_statement": {
+            "revenue": 332238000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 41268000000,
+            "net_income": 28844000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 10681000000,
+            "accounts_receivable": 35744000000,
+            "inventory": null,
+            "total_assets": 448980000000,
+            "total_liabilities": 182354000000,
+            "shareholders_equity": 259386000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 51970000000,
+            "capex": 28358000000,
+            "free_cash_flow": 23612000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.12421216116157695,
+            "net_margin": 0.08681728158729586,
+            "fcf_margin": 0.07106953449033525,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.06424339614236714,
+            "return_on_equity": 0.11120106713546606,
+            "asset_turnover": 0.7399839636509421,
+            "cash_conversion": 1.8017611981694632,
+            "capex_ratio": 0.08535447480420662
+        }
+    },
+    "2024": {
+        "income_statement": {
+            "revenue": 349585000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 48873000000,
+            "net_income": 33680000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 23029000000,
+            "accounts_receivable": 35282000000,
+            "inventory": null,
+            "total_assets": 453475000000,
+            "total_liabilities": 182869000000,
+            "shareholders_equity": 263705000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 55022000000,
+            "capex": 24306000000,
+            "free_cash_flow": 30716000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.1398029091637227,
+            "net_margin": 0.09634280647052934,
+            "fcf_margin": 0.08786418181558134,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.07427090798831247,
+            "return_on_equity": 0.12771847329402172,
+            "asset_turnover": 0.7709024753294007,
+            "cash_conversion": 1.6336698337292161,
+            "capex_ratio": 0.06952815481213438
+        }
+    },
+    "2023": {
+        "income_statement": {
+            "revenue": 344582000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 52783000000,
+            "net_income": 36010000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 31539000000,
+            "accounts_receivable": 30296000000,
+            "inventory": null,
+            "total_assets": 376317000000,
+            "total_liabilities": 163779000000,
+            "shareholders_equity": 204802000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 55369000000,
+            "capex": 21919000000,
+            "free_cash_flow": 33450000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.15317979464974954,
+            "net_margin": 0.10450342734095222,
+            "fcf_margin": 0.0970741361998015,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.0956906012749889,
+            "return_on_equity": 0.17582836105116162,
+            "asset_turnover": 0.9156695020421612,
+            "cash_conversion": 1.537600666481533,
+            "capex_ratio": 0.0636104033292511
+        }
+    },
+    "2022": {
+        "income_statement": {
+            "revenue": 413680000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 77753000000,
+            "net_income": 55740000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 29640000000,
+            "accounts_receivable": 32844000000,
+            "inventory": null,
+            "total_assets": 369067000000,
+            "total_liabilities": 166594000000,
+            "shareholders_equity": 195049000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 76797000000,
+            "capex": 18407000000,
+            "free_cash_flow": 58390000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.18795445755173082,
+            "net_margin": 0.13474182943337845,
+            "fcf_margin": 0.14114774705086056,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.151029487870766,
+            "return_on_equity": 0.2857743438828192,
+            "asset_turnover": 1.120880490534239,
+            "cash_conversion": 1.3777717976318622,
+            "capex_ratio": 0.04449574550377103
+        }
+    },
+    "2021": {
+        "income_statement": {
+            "revenue": 276692000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 31234000000,
+            "net_income": 23040000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 6802000000,
+            "accounts_receivable": 26883000000,
+            "inventory": null,
+            "total_assets": 338923000000,
+            "total_liabilities": 163240000000,
+            "shareholders_equity": 168577000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 48129000000,
+            "capex": 12076000000,
+            "free_cash_flow": 36053000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.11288363957035259,
+            "net_margin": 0.08326948375811372,
+            "fcf_margin": 0.13030011709771153,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.06798004266455802,
+            "return_on_equity": 0.13667344892838287,
+            "asset_turnover": 0.8163860227839361,
+            "cash_conversion": 2.0889322916666666,
+            "capex_ratio": 0.04364419643502523
+        }
+    },
+    "2020": {
+        "income_statement": {
+            "revenue": 178574000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": -28883000000,
+            "net_income": -22440000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 4364000000,
+            "accounts_receivable": 16339000000,
+            "inventory": null,
+            "total_assets": 332750000000,
+            "total_liabilities": 168620000000,
+            "shareholders_equity": 157150000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 14668000000,
+            "capex": 17282000000,
+            "free_cash_flow": -2614000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": -0.16174247090841892,
+            "net_margin": -0.1256621904644573,
+            "fcf_margin": -0.014638189210075375,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": -0.06743801652892562,
+            "return_on_equity": -0.142793509385937,
+            "asset_turnover": 0.5366611570247933,
+            "cash_conversion": -0.6536541889483066,
+            "capex_ratio": 0.09677780639958784
+        }
+    },
+    "2019": {
+        "income_statement": {
+            "revenue": 255583000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 20056000000,
+            "net_income": 14340000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 3089000000,
+            "accounts_receivable": 21100000000,
+            "inventory": null,
+            "total_assets": 362597000000,
+            "total_liabilities": 163659000000,
+            "shareholders_equity": 191650000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 29716000000,
+            "capex": 24361000000,
+            "free_cash_flow": 5355000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.07847157283543897,
+            "net_margin": 0.056107018072407006,
+            "fcf_margin": 0.02095209775298044,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.03954803818012835,
+            "return_on_equity": 0.07482389773023741,
+            "asset_turnover": 0.7048679387860352,
+            "cash_conversion": 2.0722454672245467,
+            "capex_ratio": 0.0953154161270507
+        }
+    },
+    "2018": {
+        "income_statement": {
+            "revenue": 279332000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 30953000000,
+            "net_income": 20840000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 3042000000,
+            "accounts_receivable": 19638000000,
+            "inventory": null,
+            "total_assets": 346196000000,
+            "total_liabilities": 147668000000,
+            "shareholders_equity": 191794000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 36014000000,
+            "capex": 19574000000,
+            "free_cash_flow": 16440000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.11081079145962511,
+            "net_margin": 0.0746065613678347,
+            "fcf_margin": 0.058854696203800495,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.06019711377370045,
+            "return_on_equity": 0.10865824791182206,
+            "asset_turnover": 0.8068608533894095,
+            "cash_conversion": 1.7281190019193857,
+            "capex_ratio": 0.0700743201638194
+        }
+    },
+    "2017": {
+        "income_statement": {
+            "revenue": 237162000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 18674000000,
+            "net_income": 19710000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 3177000000,
+            "accounts_receivable": 21274000000,
+            "inventory": null,
+            "total_assets": 348691000000,
+            "total_liabilities": 154191000000,
+            "shareholders_equity": 187688000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 30066000000,
+            "capex": 15402000000,
+            "free_cash_flow": 14664000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.0787394270582977,
+            "net_margin": 0.08310774913350367,
+            "fcf_margin": 0.06183115338882283,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.056525691801623784,
+            "return_on_equity": 0.10501470525553046,
+            "asset_turnover": 0.6801494733159158,
+            "cash_conversion": 1.5254185692541857,
+            "capex_ratio": 0.06494295038834215
+        }
+    },
+    "2016": {
+        "income_statement": {
+            "revenue": 218608000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 7969000000,
+            "net_income": 7840000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 3657000000,
+            "accounts_receivable": 16033000000,
+            "inventory": null,
+            "total_assets": 330314000000,
+            "total_liabilities": 156484000000,
+            "shareholders_equity": 167325000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 22082000000,
+            "capex": 16163000000,
+            "free_cash_flow": 5919000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.03645337773549001,
+            "net_margin": 0.03586328039230037,
+            "fcf_margin": 0.027075861816584938,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.023734991553491527,
+            "return_on_equity": 0.04685492305393695,
+            "asset_turnover": 0.6618187542762342,
+            "cash_conversion": 2.8165816326530613,
+            "capex_ratio": 0.07393599502305497
+        }
+    },
+    "2015": {
+        "income_statement": {
+            "revenue": 259488000000,
+            "cost_of_revenue": null,
+            "gross_profit": null,
+            "operating_income": 21966000000,
+            "net_income": 16150000000,
+            "weighted_avg_shares_diluted": null
+        },
+        "balance_sheet": {
+            "cash": 3705000000,
+            "accounts_receivable": 13243000000,
+            "inventory": null,
+            "total_assets": 336758000000,
+            "total_liabilities": 159948000000,
+            "shareholders_equity": 170811000000
+        },
+        "cashflow_statement": {
+            "operating_cash_flow": 30344000000,
+            "capex": 26490000000,
+            "free_cash_flow": 3854000000
+        },
+        "derived_metrics": {
+            "gross_margin": null,
+            "operating_margin": 0.08465131335553089,
+            "net_margin": 0.062237945492662476,
+            "fcf_margin": 0.014852324577629795,
+            "earnings_per_share": null,
+            "fcf_per_share": null,
+            "return_on_assets": 0.04795728683505663,
+            "return_on_equity": 0.09454894591097764,
+            "asset_turnover": 0.770547396052952,
+            "cash_conversion": 1.8788854489164086,
+            "capex_ratio": 0.1020856455789863
+        }
+    },
+    "market_metrics": {
+        "share_price": 158.16,
+        "shares_outstanding": 4166763453,
+        "market_cap": 659015335936,
+        "enterprise_value": 706061336576,
+        "pe_ratio": 23.57079,
+        "price_to_sales": 2.0345945,
+        "price_to_book": 2.548132,
+        "ev_to_revenue": 2.1251673095070402,
+        "ev_to_fcf": 29.90264850821616,
+        "fcf_yield": 0.03582921172306841
+    },
+    "multi_year_metrics": {
+        "revenue_cagr": {
+            "3y": -0.07047389092839673,
+            "5y": 0.13220799003608774,
+            "10y": 0.02502203721350349
+        },
+        "fcf_cagr": {
+            "3y": -0.2605114854361147,
+            "5y": 0.20042415506929245,
+            "10y": null
+        },
+        "avg_roe": {
+            "3y": null,
+            "5y": 0.16743913885837028,
+            "10y": 0.10297539588574414
+        },
+        "operating_margin_change": {
+            "3y": -0.06374229639015387,
+            "5y": null,
+            "10y": null
+        },
+        "share_count_change": {
+            "3y": null,
+            "5y": null,
+            "10y": null
+        },
+        "revenue_volatility": {
+            "3y": null,
+            "5y": null,
+            "10y": 0.2660346067021894
+        }
+    }
+}

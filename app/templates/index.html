@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Company Search</title>
-    <link rel="stylesheet" href="static/css/awesomplete.min.css"/>
+    <link rel="stylesheet" href="/static/css/awesomplete.min.css"/>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -10,8 +10,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            padding-top: 100px;
             margin: 0;
         }
 
@@ -20,13 +19,13 @@
         }
 
         #company {
-        width: 400px;
-        padding: 10px;
-        font-size: 16px;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        box-sizing: border-box;
+            width: 400px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-sizing: border-box;
         }
 
         .search-wrapper {
@@ -39,34 +38,14 @@
             right: 6px;
             top: 50%;
             transform: translateY(-50%);
-
             width: 40px;
             height: 32px;
-
             border: none;
             font-size: 16px;
             border-radius: 4px;
             background: #4CAF50;
             color: #256d2a;
             cursor: pointer;
-        }
-
-        #preview-wrapper {
-            width: 315px;              
-            height: 448px;
-            overflow: hidden;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            background: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-
-        #preview-frame {
-            width: 800px;
-            height: 2000px;
-            transform: scale(0.39);
-            transform-origin: top left;
-            border: none;
         }
 
         .awesomplete {
@@ -109,17 +88,8 @@
     <input id="company" placeholder="Type company name or ticker"/>
     <button id="search-btn">➔</button>
 </div>
-<div id="preview-container" style="display:none; margin-top:20px;">
 
-    <div id="preview-wrapper">
-        <iframe id="preview-frame"></iframe>
-    </div>
-
-</div>
-<a id="download-link" href="#" style="display:none;" target="_blank">
-    Download latest 10-K
-</a>
-<script src="static/js/awesomplete.min.js"></script>
+<script src="/static/js/awesomplete.min.js"></script>
 <script>
     const input = document.getElementById("company");
 
@@ -130,63 +100,34 @@
         autoFirst: true
     });
 
-    // Store the mapping symbol -> company object
     let companyMap = {};
-
-    // Fetch suggestions from backend
     let searchTimeout = null;
 
     input.addEventListener("input", () => {
         const query = input.value;
-
         if (query.length < 2) return;
-
-        // Cancel previous timer
         clearTimeout(searchTimeout);
-
-        // Start new timer
         searchTimeout = setTimeout(async () => {
             const response = await fetch(`/search?query=${query}`);
             const data = await response.json();
-
             companyMap = {};
             const list = data.map(c => {
                 const display = `${c.symbol} - ${c.name}`;
                 companyMap[display] = c;
                 return display;
             });
-
             awesomplete.list = list;
-
         }, 400);
     });
 
     const button = document.getElementById("search-btn");
-    const downloadLink = document.getElementById("download-link");
-    const previewContainer = document.getElementById("preview-container");
-    const previewFrame = document.getElementById("preview-frame");
-
-    button.addEventListener("click", async() => {
+    button.addEventListener("click", () => {
         const selectedText = input.value;
         const company = companyMap[selectedText];
-
         if (!company) return;
-
-        console.log("Button clicked for:", company.symbol);
-
-        const response = await fetch(`/get_10k?ticker=${company.symbol}`);
-        const data = await response.json();
-
-        if (data.download_url) {
-            downloadLink.href = data.download_url;
-            downloadLink.style.display = "block";
-            downloadLink.textContent = `Open ${company.symbol} latest 10k`
-
-            previewFrame.src = data.preview_url;
-            previewContainer.style.display = "block";
-        }
+        const ticker = company.symbol;
+        window.location.href = `/company?ticker=${ticker}`;
     });
 </script>
-
 </body>
 </html>

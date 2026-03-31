@@ -3,63 +3,108 @@ TAG_MAP = {
 "income_statement": {
 
     "revenue": [
-        "Revenues",  # most common canonical tag
         "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "RevenueFromContractWithCustomerIncludingAssessedTax",
+        "Revenues",
         "SalesRevenueNet",
-        "RevenueFromContractWithCustomerIncludingAssessedTax"
+        "SalesRevenueGoodsNet",
+        "SalesRevenueServicesNet",
+        "SalesRevenueNetOfReturnsAndAllowances",
+        "RevenuesNetOfInterestExpense",
+        "OperatingRevenue",
+        "TotalRevenuesNetOfInterestExpense"
     ],
 
     "cost_of_revenue": [
         "CostOfRevenue",
         "CostOfGoodsAndServicesSold",
-        "CostOfGoodsSold"
+        "CostOfGoodsSold",
+        "CostOfSales",
+        "CostOfServices",
+        "CostOfProductsSold",
+        "CostOfGoodsSoldExcludingDepreciationDepletionAndAmortization"
     ],
 
     "gross_profit": [
-        "GrossProfit"  # if missing, should be computed
+        "GrossProfit"
     ],
 
     "operating_income": [
-        "OperatingIncomeLoss"
+        "OperatingIncomeLoss",
+        "IncomeLossFromOperations",
+        "OperatingProfitLoss",
+        "IncomeFromOperations",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxes",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+        "OperatingIncome",
+        "OperatingProfit",
+        "OperatingIncomeLossBeforeDepreciationAmortization"
     ],
 
     "net_income": [
         "NetIncomeLoss",
-        "ProfitLoss"
-    ]
+        "ProfitLoss",
+        "NetIncomeLossAvailableToCommonStockholdersBasic",
+        "NetIncomeLossAvailableToCommonStockholdersDiluted",
+        "IncomeLossFromContinuingOperations"
+    ],
+
+    "weighted_avg_shares_diluted": [
+        "WeightedAverageNumberOfDilutedSharesOutstanding",
+        "WeightedAverageNumberOfSharesOutstandingDiluted",
+        "WeightedAverageNumberOfShareOutstandingDiluted",
+        "WeightedAverageNumberOfSharesDiluted",
+        "WeightedAverageSharesDiluted",
+        "DilutedWeightedAverageSharesOutstanding",
+        "WeightedAverageNumberOfCommonSharesOutstandingDiluted"
+    ],
+
 },
 
 "balance_sheet": {
 
     "cash": [
         "CashAndCashEquivalentsAtCarryingValue",
-        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"
+        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+        "CashAndDueFromBanks",
+        "Cash",
+        "CashEquivalentsAtCarryingValue"
     ],
 
     "accounts_receivable": [
         "AccountsReceivableNetCurrent",
         "ReceivablesNetCurrent",
-        "AccountsReceivableNet"
+        "AccountsReceivableNet",
+        "TradeAccountsReceivableNetCurrent",
+        "AccountsNotesAndLoansReceivableNetCurrent"
     ],
 
     "inventory": [
         "InventoryNet",
         "InventoriesNet",
-        "InventoryFinishedGoods"
+        "InventoryFinishedGoods",
+        "InventoryGross",
+        "InventoryRawMaterials",
+        "InventoryWorkInProcess"
     ],
 
     "total_assets": [
-        "Assets"
+        "Assets",
+        "AssetsTotal"
     ],
 
     "total_liabilities": [
-        "Liabilities"
+        "Liabilities",
+        "LiabilitiesTotal",
+        "TotalLiabilities"
     ],
 
     "shareholders_equity": [
         "StockholdersEquity",
         "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
-        "StockholdersEquityAttributableToParent"
+        "StockholdersEquityAttributableToParent",
+        "StockholdersEquityIncludingPortionAttributableToParent",
+        "Equity"
     ]
 
 },
@@ -68,13 +113,16 @@ TAG_MAP = {
 
     "operating_cash_flow": [
         "NetCashProvidedByUsedInOperatingActivities",
-        "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"
+        "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations",
+        "CashProvidedByUsedInOperatingActivities"
     ],
 
     "capex": [
         "PaymentsToAcquirePropertyPlantAndEquipment",
         "PaymentsToAcquireProductiveAssets",
-        "CapitalExpenditures"
+        "CapitalExpenditures",
+        "PaymentsForProceedsFromPropertyPlantAndEquipment",
+        "PaymentsToAcquirePropertyPlantAndEquipmentAndIntangibleAssets"
     ]
 
 }

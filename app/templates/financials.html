@@ -1,0 +1,394 @@
+{% macro format_millions(value) %}
+    {% if value %}
+        {{ "{:,.0f}".format(value / 1000000) }}
+    {% else %}
+        N/A
+    {% endif %}
+{% endmacro %}
+
+
+{% macro format_value(value) %}
+    {% if value %}
+        {% set v = value %}
+        {% if v >= 1000000000000 %}
+            {{ (v / 1000000000000) | round(2) }}T
+        {% elif v >= 1000000000 %}
+            {{ (v / 1000000000) | round(2) }}B
+        {% elif v >= 1000000 %}
+            {{ (v / 1000000) | round(2) }}M
+        {% elif v >= 1000 %}
+            {{ (v / 1000) | round(2) }}K
+        {% else %}
+            {{ v | round(2)}}
+        {% endif %}
+    {% else %}
+        N/A
+    {% endif %}
+{% endmacro %}
+
+{% macro format_percent(value) %}
+    {% if value %}
+        {{ (value * 100) | round(2) }}%
+    {% else %}
+        N/A
+    {% endif %}
+{% endmacro %}
+
+{% macro format_ratio(value) %}
+    {% if value %}
+        {{ value | round(2) }}x
+    {% else %}
+        N/A
+    {% endif %}
+{% endmacro %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Financials - {{ ticker }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1, h2 {
+            margin: 20px 0 10px 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            width: 500px;
+            background-color: white;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            text-align: right;
+        }
+
+        th {
+            background-color: #eee;
+            text-align: left;
+        }
+
+        caption {
+            caption-side: top;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Financials - {{ ticker }}</h1>
+
+<!-- Income Statement -->
+<table>
+    <caption>Income Statement - USD millions (except diluted shares)</caption>
+
+    <tr>
+        <th>Metric</th>
+        {% for year in years %}
+        <th>{{ year }}</th>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Revenue</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].income_statement.revenue) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Cost of Revenue</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].income_statement.cost_of_revenue) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Gross Profit</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].income_statement.gross_profit) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Operating Income</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].income_statement.operating_income) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Net Income</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].income_statement.net_income) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Weighted avg shares diluted (million units)</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].income_statement.weighted_avg_shares_diluted) }}</td>
+        {% endfor %}
+    </tr>
+
+</table>
+
+<!-- Balance Sheet -->
+<table>
+    <caption>Balance Sheet - USD millions</caption>
+
+    <tr>
+        <th>Metric</th>
+        {% for year in years %}
+        <th>{{ year }}</th>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Cash</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].balance_sheet.cash) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Accounts Receivable</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].balance_sheet.accounts_receivable) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Inventory</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].balance_sheet.inventory) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Total Assets</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].balance_sheet.total_assets) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Total Liabilities</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].balance_sheet.total_liabilities) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Shareholders' Equity</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].balance_sheet.shareholders_equity) }}</td>
+        {% endfor %}
+    </tr>
+
+</table>
+
+<!-- Cashflow Statement -->
+<table>
+    <caption>Cashflow Statement - USD millions</caption>
+
+    <tr>
+        <th>Operating Cash Flow</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].cashflow_statement.operating_cash_flow) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Capex</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].cashflow_statement.capex) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Free Cash Flow</th>
+        {% for year in years %}
+        <td>{{ format_millions(financials[year].cashflow_statement.free_cash_flow) }}</td>
+        {% endfor %}
+    </tr>
+
+</table>
+</body>
+</html>
+
+<!-- Derived Metrics -->
+<table>
+    <caption>Derived Metrics</caption>
+
+    <tr>
+        <th>Metric</th>
+        {% for year in years %}
+        <th>{{ year }}</th>
+        {% endfor %}
+    </tr>
+
+    <!-- Margins -->
+    <tr>
+        <th colspan="{{ years|length + 1 }}" style="text-align:left;">Margins</th>
+    </tr>
+
+    <tr>
+        <th>Gross Margin</th>
+        {% for year in years %}
+        <td>{{ format_percent(financials[year].derived_metrics.gross_margin) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Operating Margin</th>
+        {% for year in years %}
+        <td>{{ format_percent(financials[year].derived_metrics.operating_margin) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Net Margin</th>
+        {% for year in years %}
+        <td>{{ format_percent(financials[year].derived_metrics.net_margin) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>FCF Margin</th>
+        {% for year in years %}
+        <td>{{ format_percent(financials[year].derived_metrics.fcf_margin) }}</td>
+        {% endfor %}
+    </tr>
+
+    <!-- Shares -->
+    <tr>
+        <th colspan="{{ years|length + 1 }}" style="text-align:left;">Margins</th>
+    </tr>
+
+    <tr>
+        <th>Earnings per share</th>
+        {% for year in years %}
+        <td>${{ format_value(financials[year].derived_metrics.earnings_per_share) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Free cash flow per share</th>
+        {% for year in years %}
+        <td>${{ format_value(financials[year].derived_metrics.fcf_per_share) }}</td>
+        {% endfor %}
+    </tr>
+
+    <!-- Returns -->
+    <tr>
+        <th colspan="{{ years|length + 1 }}" style="text-align:left;">Returns</th>
+    </tr>
+
+    <tr>
+        <th>Return on Assets</th>
+        {% for year in years %}
+        <td>{{ format_percent(financials[year].derived_metrics.return_on_assets) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Return on Equity</th>
+        {% for year in years %}
+        <td>{{ format_percent(financials[year].derived_metrics.return_on_equity) }}</td>
+        {% endfor %}
+    </tr>
+
+    <!-- Efficiency -->
+    <tr>
+        <th colspan="{{ years|length + 1 }}" style="text-align:left;">Efficiency</th>
+    </tr>
+
+    <tr>
+        <th>Asset Turnover</th>
+        {% for year in years %}
+        <td>{{ format_ratio(financials[year].derived_metrics.asset_turnover) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Cash Conversion</th>
+        {% for year in years %}
+        <td>{{ format_ratio(financials[year].derived_metrics.cash_conversion) }}</td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Capex / Revenue</th>
+        {% for year in years %}
+        <td>{{ format_percent(financials[year].derived_metrics.capex_ratio) }}</td>
+        {% endfor %}
+    </tr>
+
+
+<!-- Market metrics-->
+<table>
+    <caption>Market Metrics</caption>
+
+    <tr>
+        <th>Share Price</th><td>${{ format_value(financials.market_metrics.share_price) }}</td>
+    </tr>
+
+    <tr>
+        <th>Shares Outstanding</th><td>{{ format_value(financials.market_metrics.shares_outstanding) }}</td>
+    </tr>
+
+    <tr>
+        <th>Market Cap</th>
+        <td>${{ format_value(financials.market_metrics.market_cap) }}</td>
+    </tr>
+
+    <tr>
+        <th>Enterprise Value</th>
+        <td>${{ format_value(financials.market_metrics.enterprise_value) }}</td>
+    </tr>
+
+    <tr>
+        <th>P/E Ratio</th>
+        <td>{{ format_ratio(financials.market_metrics.pe_ratio) }}</td>
+    </tr>
+
+    <tr>
+        <th>Price / Sales</th>
+        <td>{{ format_ratio(financials.market_metrics.price_to_sales) }}</td>
+    </tr>
+
+    <tr>
+        <th>Price / Book</th>
+        <td>{{ format_ratio(financials.market_metrics.price_to_book) }}</td>
+    </tr>
+
+    <tr>
+        <th>EV / Revenue</th>
+        <td>{{ format_ratio(financials.market_metrics.ev_to_revenue) }}</td>
+    </tr>
+
+    <tr>
+        <th>EV / FCF</th>
+        <td>{{ format_ratio(financials.market_metrics.ev_to_fcf) }}</td>
+    </tr>
+
+    <tr>
+        <th>FCF Yield</th>
+        <td>{{ format_percent(financials.market_metrics.fcf_yield) }}</td>
+    </tr>
+
+</table>
+

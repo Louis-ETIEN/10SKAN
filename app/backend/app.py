@@ -23,7 +23,7 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 SEC_TICKER_URL = "https://www.sec.gov/files/company_tickers.json"
 HEADERS_SEC = {
-    "User-Agent": "Louis Etien louis-etien@hotmail.fr"
+    "User-Agent": "Louis Etien louis.canellou@gmail.fr"
 }
 YAHOO_SEARCH_URL = "https://query2.finance.yahoo.com/v1/finance/search"
 HEADERS_YAHOO = {
@@ -109,15 +109,13 @@ def search_company(query: str):
 
     return results
 
-def get_10k_data(ticker: str, request: Request):
+def get_10k_data(ticker: str, cik):
 
     ticker = ticker.upper()
 
     ## Retrieve 10k
  
     filepath_10k = HTML_DIR / f"{ticker}_10K.html"
-
-    cik = request.app.state.ticker_to_cik.get(ticker)
 
     if not cik: 
         return {"error": "Ticker not found"}
@@ -151,7 +149,9 @@ async def company_page(request: Request, ticker: str = Query(None)):
         return RedirectResponse(url="/")
 
     # Get all necessary links
-    data = get_10k_data(ticker, request=request)
+
+    cik = request.app.state.ticker_to_cik.get(ticker)
+    data = get_10k_data(ticker, cik)
 
     if not data:
         return f"No data found for ticker {ticker}", 404
@@ -170,50 +170,28 @@ async def company_page(request: Request, ticker: str = Query(None)):
     
 @app.get("/financials")
 def financials_page(request: Request, ticker: str):
+
     json_path = GAAP_DIR / f"{ticker}_gaap.json"
+
     if not json_path.exists():
         return f"No financial data found for {ticker}", 404
-    
+
     with open(json_path) as f:
         data = json.load(f)
 
-    #data = format_financials(data)
+    # years are the keys of the json
+    years = [y for y in data.keys() if (y != "market_metrics" and y != "multi_year_metrics")]
+    years = sorted(years, reverse=True)[:3]
 
     return templates.TemplateResponse(
         "financials.html",
         {
             "request": request,
             "ticker": ticker,
-            "income_statement": data.get("income_statement", {}),
-            "balance_sheet": data.get("balance_sheet", {}),
-            "cashflow_statement": data.get("cashflow_statement", {}),
-            "derived_metrics": data.get("derived_metrics", {}),
-            "market_metrics": data.get("market_metrics", {}),
+            "financials": data,
+            "years": years
         }
     )
 
-def format_k_m(value):
-    if value is None:
-        return "N/A"
-
-    value = float(value)
-
-    if abs(value) >= 1_000_000:
-        return f"${value / 1_000_000:.0f}M"
-    elif abs(value) >= 1_000:
-        return f"${value / 1_000:.0f}M"
-    else:
-        return f"{value:.0f}"
-    
-def format_financials(data):
-    formatted = {}
-
-    for section, metrics in data.items():
-        formatted[section] = {}
-        for key, value in metrics.items():
-            if section == "derived_metrics" or section == "market_metrics":
-                formatted[section][key] = value
-            else:
-                formatted[section][key] = format_k_m(value)
-
-    return formatted
+if __name__ == "__main__":
+    get_10k_data(ticker="AAPL", cik="0000320193")

@@ -1,9 +1,11 @@
 import time
+from datetime import datetime
 import requests
 import yfinance as yf
 from copy import deepcopy
-from schema import SCHEMA
+from schema import SCHEMA, SCHEMA_MM, SCHEMA_MYM
 from tag_map import TAG_MAP
+import json
 
 
 HEADERS_SEC = {
@@ -15,7 +17,7 @@ def get_filing_url(cik):
 
     r = requests.get(submission_url, headers=HEADERS_SEC)
     data = r.json()
-    time.sleep(0.2) # SEC has a 10 requests/sec limit
+    time.sleep(0.1) # SEC has a 10 requests/sec limit
 
     filings = data["filings"]["recent"]
 
@@ -38,7 +40,7 @@ def get_filing_url(cik):
     cik_no_zero = str(int(cik))
 
     return f"https://www.sec.gov/Archives/edgar/data/{cik_no_zero}/{accession}/{document}"
-
+    
 def get_company_facts(cik: str):
 
     cik = cik.zfill(10)
@@ -51,78 +53,134 @@ def get_company_facts(cik: str):
 
     return response.json()
 
-def get_latest_fact(facts, tag):
+def fiscal_year(end):
+
+    d = datetime.strptime(end, "%Y-%m-%d")
+
+    # January fiscal year endings belong to previous FY
+    if d.month <= 2:
+        return str(d.year - 1)
+
+    return str(d.year)
+
+def is_full_year(start, end):
+    start = datetime.strptime(start, "%Y-%m-%d")
+    end = datetime.strptime(end, "%Y-%m-%d")
+
+    days = (end - start).days
+
+    return 350 <= days <= 380
+
+def get_years(facts, n_years=11):
+
+    years = set()
+
+    assets_entries = facts["facts"]["us-gaap"]["Assets"]["units"]["USD"]
+
+    entries = [e for e in assets_entries if e.get("form") == "10-K"]
+
+    for e in entries:
+        years.add(fiscal_year(e["end"]))
+
+    years = list(years) 
+
+    years.sort(reverse=True)
+
+    return years[:n_years]
+
+def get_facts(facts, tag, section, year):
 
     try:
 
-        entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
-
-        annual_entries = [
-            e for e in entries
-            if e.get("fp") == "FY"
-        ]
-
-        if not annual_entries:
-            return None
-
-        latest = sorted(
-            annual_entries,
-            key=lambda x: x["end"]
-        )[-1]
-
-        return latest["val"]
+        if tag in (TAG_MAP["income_statement"]["weighted_avg_shares_diluted"]):
+            entries = facts["facts"]["us-gaap"][tag]["units"]["shares"]
+            for e in entries:
+                #if e.get("fp") in ("FY", "Q4") and fiscal_year(e.get("end", "")) == year:
+                if e["form"] == "10-K" and "start" in e and "end" in e and \
+                is_full_year(e["start"], e["end"]) and fiscal_year(e.get("end", "")) == year:
+                    return e.get("val")
+                
+        if section in ("income_statement", "cashflow_statement"):
+            entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
+            for e in entries:
+                if e["form"] == "10-K" and "start" in e and "end" in e and \
+                is_full_year(e["start"], e["end"]) and fiscal_year(e.get("end", "")) == year:
+                    return e.get("val")
+        else:
+            entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
+            for e in entries:
+                if e["form"] == "10-K" and fiscal_year(e.get("end", "")) == year:
+                    return e.get("val")
+        return None
 
     except KeyError:
-
         return None
     
-def extract_financials(ticker, cik):
+def extract_financials(ticker, cik, n_years=11):
 
     # Fetch the basic numbers from the SEC
 
     facts = get_company_facts(cik)
 
-    result = deepcopy(SCHEMA)
+    years = get_years(facts, n_years=n_years)
 
-    for section in TAG_MAP:
+    results = {year: deepcopy(SCHEMA) for year in years}
 
-        for metric in TAG_MAP[section]:
+    results["market_metrics"] = SCHEMA_MM
 
-            tags = TAG_MAP[section][metric]
+    results["multi_year_metrics"] = SCHEMA_MYM
 
-            for tag in tags:
+    for year in years:
+        result = results[year]
 
-                value = get_latest_fact(facts, tag)
+        for section in TAG_MAP:
 
-                if value is not None:
-                    result[section][metric] = value
-                    break
+            for metric in TAG_MAP[section]:
 
-    # Backup computations if the tags were not all assigned by the company
+                tags = TAG_MAP[section][metric]
 
-    if result["cashflow_statement"]["operating_cash_flow"] and \
-       result["cashflow_statement"]["capex"]:
+                for tag in tags:
 
-        ocf = result["cashflow_statement"]["operating_cash_flow"]
-        capex = result["cashflow_statement"]["capex"]
+                    value = get_facts(facts, tag, section, year)
 
-        result["cashflow_statement"]["free_cash_flow"] = ocf - abs(capex)
-    
-    if not result["income_statement"]["gross_profit"] and result["income_statement"]["revenue"] and result["income_statement"]["cost_of_revenue"]:
-        result["income_statement"]["gross_profit"] = result["income_statement"]["revenue"] - result["income_statement"]["cost_of_revenue"]
-    
-    if not result["balance_sheet"]["shareholders_equity"] and result["balance_sheet"]["total_assets"] and result["balance_sheet"]["total_liabilities"]:
-        result["balance_sheet"]["shareholders_equity"] = result["balance_sheet"]["total_assets"] - result["balance_sheet"]["total_liabilities"]
+                    if value is not None:
+                        result[section][metric] = value
+                        break
+        
 
-    # Compute derived metrics
 
-    compute_derived_metrics(result)
+        # Backup computations if the tags were not all assigned by the company
+
+        if result["cashflow_statement"]["operating_cash_flow"] and \
+        result["cashflow_statement"]["capex"]:
+
+            ocf = result["cashflow_statement"]["operating_cash_flow"]
+            capex = result["cashflow_statement"]["capex"]
+
+            result["cashflow_statement"]["free_cash_flow"] = ocf - abs(capex)
+        
+        if not result["income_statement"]["gross_profit"] and result["income_statement"]["revenue"] and result["income_statement"]["cost_of_revenue"]:
+            result["income_statement"]["gross_profit"] = result["income_statement"]["revenue"] - result["income_statement"]["cost_of_revenue"]
+        
+        if not result["balance_sheet"]["shareholders_equity"] and result["balance_sheet"]["total_assets"] and result["balance_sheet"]["total_liabilities"]:
+            result["balance_sheet"]["shareholders_equity"] = result["balance_sheet"]["total_assets"] - result["balance_sheet"]["total_liabilities"]
+
+        if not result["balance_sheet"]["total_liabilities"] and result["balance_sheet"]["total_assets"] and result["balance_sheet"]["shareholders_equity"]:
+            result["balance_sheet"]["total_liabilities"] = result["balance_sheet"]["total_assets"] - result["balance_sheet"]["shareholders_equity"]
+
+        # Compute derived metrics
+
+        compute_derived_metrics(result)
 
     # Fetch and compute market metrics from yahoo finance
 
-    compute_market_metrics(ticker, result)
+    compute_market_metrics(ticker, results, revenue=results[years[0]]["income_statement"]["revenue"], fcf=results[years[0]]["cashflow_statement"]["free_cash_flow"])
 
-    return result
+    # compute multi-year metrics from existing data
+
+    compute_multi_year_metrics(results, years)
+
+    return results
 
 def compute_derived_metrics(result):
 
@@ -135,12 +193,14 @@ def compute_derived_metrics(result):
     gross_profit = is_["gross_profit"]
     operating_income = is_["operating_income"]
     net_income = is_["net_income"]
+    weighted_avg_shares_diluted = is_["weighted_avg_shares_diluted"]
 
     total_assets = bs["total_assets"]
     equity = bs["shareholders_equity"]
 
     operating_cash_flow = cf["operating_cash_flow"]
     capex = cf["capex"]
+    free_cash_flow = cf["free_cash_flow"]
 
 
     # Profitability margins
@@ -154,6 +214,16 @@ def compute_derived_metrics(result):
     if revenue and net_income:
         dm["net_margin"] = net_income / revenue
 
+    if revenue and free_cash_flow:
+        dm["fcf_margin"] = free_cash_flow / revenue
+
+    # per-share
+
+    if net_income and weighted_avg_shares_diluted:
+        dm["earnings_per_share"] = net_income / weighted_avg_shares_diluted
+
+    if free_cash_flow and weighted_avg_shares_diluted:
+        dm["fcf_per_share"] = free_cash_flow / weighted_avg_shares_diluted
 
     # Returns
 
@@ -178,11 +248,11 @@ def compute_derived_metrics(result):
     if capex and revenue:
         dm["capex_ratio"] = capex / revenue
 
-def compute_market_metrics(ticker, result):
+def compute_market_metrics(ticker, results, revenue, fcf):
     stock = yf.Ticker(ticker)
     info = stock.info
 
-    mm = result["market_metrics"]
+    mm = results["market_metrics"]
 
     mm["share_price"] = info.get("currentPrice")
     mm["shares_outstanding"] = info.get("sharesOutstanding")
@@ -192,9 +262,6 @@ def compute_market_metrics(ticker, result):
     mm["pe_ratio"] = info.get("trailingPE")
     mm["price_to_sales"] = info.get("priceToSalesTrailing12Months")
     mm["price_to_book"] = info.get("priceToBook")
-
-    revenue = result["income_statement"]["revenue"]
-    fcf = result["cashflow_statement"]["free_cash_flow"]
 
     ev = mm["enterprise_value"]
     market_cap = mm["market_cap"]
@@ -208,6 +275,140 @@ def compute_market_metrics(ticker, result):
     if market_cap and fcf:
         mm["fcf_yield"] = fcf / market_cap
 
+def compute_cagr(valuet0, valuet1, deltat):
+    return ((valuet1 / valuet0) ** (1 / deltat))  - 1
+
+def compute_multi_year_metrics(results, years):
+
+    mym = results["multi_year_metrics"]
+    n = len(years)
+
+    def get(path, year):
+        """Safely retrieve nested values"""
+        try:
+            v = results[year]
+            for p in path:
+                v = v[p]
+            return v
+        except:
+            return None
+
+    def compute_if_valid(metric_key, horizon, start_val, end_val):
+        if start_val and end_val and start_val > 0 and end_val > 0:
+            mym[metric_key][f"{horizon}y"] = compute_cagr(start_val, end_val, horizon)
+
+    # Revenue CAGR
+
+    if n >= 4:
+        start = get(["income_statement", "revenue"], years[3])
+        end = get(["income_statement", "revenue"], years[0])
+        compute_if_valid("revenue_cagr", 3, start, end)
+
+    if n >= 6:
+        start = get(["income_statement", "revenue"], years[5])
+        end = get(["income_statement", "revenue"], years[0])
+        compute_if_valid("revenue_cagr", 5, start, end)
+
+    if n >= 11:
+        start = get(["income_statement", "revenue"], years[10])
+        end = get(["income_statement", "revenue"], years[0])
+        compute_if_valid("revenue_cagr", 10, start, end)
+
+    # FCF CAGR
+
+    if n >= 4:
+        start = get(["cashflow_statement", "free_cash_flow"], years[3])
+        end = get(["cashflow_statement", "free_cash_flow"], years[0])
+        compute_if_valid("fcf_cagr", 3, start, end)
+
+    if n >= 6:
+        start = get(["cashflow_statement", "free_cash_flow"], years[5])
+        end = get(["cashflow_statement", "free_cash_flow"], years[0])
+        compute_if_valid("fcf_cagr", 5, start, end)
+
+    # Average ROE
+
+    if n >= 5:
+        vals = []
+        for i in range(5):
+            v = get(["derived_metrics", "return_on_equity"], years[i])
+            if v:
+                vals.append(v)
+        if len(vals) == 5:
+            mym["avg_roe"]["5y"] = sum(vals) / 5
+
+    if n >= 10:
+        vals = []
+        for i in range(10):
+            v = get(["derived_metrics", "return_on_equity"], years[i])
+            if v:
+                vals.append(v)
+        if len(vals) == 10:
+            mym["avg_roe"]["10y"] = sum(vals) / 10
+
+    # Operating Margin Change
+
+    if n >= 4:
+        start = get(["derived_metrics", "operating_margin"], years[3])
+        end = get(["derived_metrics", "operating_margin"], years[0])
+        if start is not None and end is not None:
+            mym["operating_margin_change"]["3y"] = end - start
+
+    # Share Count Change: To implement by adding shares outstanding to income statement
+
+    if n >= 4:
+        start = get(["market_metrics", "shares_outstanding"], None)
+        end = get(["market_metrics", "shares_outstanding"], None)
+
+    if n >= 4:
+        start = get(["income_statement", "shares_outstanding"], years[3])
+        end = get(["income_statement", "shares_outstanding"], years[0])
+        if start and end and start > 0:
+            mym["share_count_change"]["3y"] = (end / start) - 1
+
+    if n >= 6:
+        start = get(["income_statement", "shares_outstanding"], years[5])
+        end = get(["income_statement", "shares_outstanding"], years[0])
+        if start and end and start > 0:
+            mym["share_count_change"]["5y"] = (end / start) - 1
+
+    # Revenue Volatility (std dev of growth rates)
+
+    if n >= 11:
+
+        growth_rates = []
+
+        for i in range(10):
+            r0 = get(["income_statement", "revenue"], years[i])
+            r1 = get(["income_statement", "revenue"], years[i + 1])
+
+            if r0 and r1 and r1 > 0:
+                growth_rates.append((r0 / r1) - 1)
+
+        if len(growth_rates) == 10:
+
+            mean = sum(growth_rates) / 10
+            variance = sum((g - mean) ** 2 for g in growth_rates) / 10
+            mym["revenue_volatility"]["10y"] = variance ** 0.5
+
+
+
 
 if __name__ == "__main__":
-    print(extract_financials("0000320193")) 
+    #facts = get_company_facts("0000200406") J&J
+    # for metric in TAG_MAP["income_statement"]:
+    #     print(metric)
+    #     for tag in TAG_MAP["income_statement"][metric]:
+    #         print(get_facts(facts, tag, "income_statement", "2023"))
+    facts= get_company_facts("0001065280")
+    for tag in TAG_MAP["income_statement"]["weighted_avg_shares_diluted"]:
+        entries = facts["facts"]["us-gaap"][tag]["units"]["shares"]
+        print(tag)
+        for e in entries:
+            if "start" in e and "end" in e and is_full_year(e["start"], e["end"]):
+                print(json.dumps(e, indent=4))
+    
+    #print(get_years(facts, 11))
+    #print(json.dumps(get_years(facts, 10), indent=4))
+    #print(json.dumps(extract_financials("JNJ", "0000200406", 11), indent=4)) # JNJ test
+    #print(json.dumps(extract_financials("AAPL", "0000320193", 11), indent=4)) # Apple test

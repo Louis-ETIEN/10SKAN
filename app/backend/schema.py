@@ -5,7 +5,8 @@ SCHEMA = {
         "cost_of_revenue": None,
         "gross_profit": None,
         "operating_income": None,
-        "net_income": None
+        "net_income": None,
+        "weighted_avg_shares_diluted": None
     },
 
     "balance_sheet": {
@@ -29,6 +30,11 @@ SCHEMA = {
         "gross_margin": None,
         "operating_margin": None,
         "net_margin": None,
+        "fcf_margin": None,
+
+        # per-share
+        "earnings_per_share": None,
+        "fcf_per_share": None,
 
         # returns
         "return_on_assets": None,
@@ -41,8 +47,9 @@ SCHEMA = {
         "cash_conversion": None,
         "capex_ratio": None
     },
+}
 
-    "market_metrics": {
+SCHEMA_MM = {
 
         "share_price": None,
         "shares_outstanding": None,
@@ -57,7 +64,45 @@ SCHEMA = {
         "ev_to_revenue": None,
         "ev_to_fcf": None,
 
-        "fcf_yield": None
-    }
+        "fcf_yield": None  
 }
 
+SCHEMA_MYM = {
+
+    "revenue_cagr": { # 3, 5, 10
+        "3y": None,
+        "5y": None,
+        "10y": None,
+    },
+
+    "fcf_cagr": { # 3, 5
+        "3y": None,
+        "5y": None,
+        "10y": None,
+    },
+
+    "avg_roe": { # 5, 10
+        "3y": None,
+        "5y": None,
+        "10y": None,
+    },
+
+    "operating_margin_change": { # 3
+        "3y": None,
+        "5y": None,
+        "10y": None,
+    },
+
+    "share_count_change": { # 3, 5
+        "3y": None,
+        "5y": None,
+        "10y": None,
+    },
+
+    "revenue_volatility": { # 10
+        "3y": None,
+        "5y": None,
+        "10y": None,
+    },
+
+}
