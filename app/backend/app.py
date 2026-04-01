@@ -1,6 +1,6 @@
 # main.py
 
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
@@ -10,7 +10,7 @@ import requests
 import json
 from pathlib import Path
 import data_extraction
-
+from data_extraction import ExternalAPIError, FilingNotFoundError
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DOWNLOAD_DIR = BASE_DIR / "downloads"
@@ -30,22 +30,20 @@ HEADERS_YAHOO = {
     "User-Agent": "Mozilla/5.0"
 }
 US_EXCHANGE = {"NMS", "NYQ", "ASE"}
-CACHE_FILE = BASE_DIR / "resources" / "ticker_cache.json"
+CIK_TICKER_CACHE = BASE_DIR / "resources" / "cik_ticker_cache.json"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-
-    # ---- startup code ----
     try: 
         response = requests.get(SEC_TICKER_URL, headers=HEADERS_SEC)
         response.raise_for_status()
         data = response.json()
 
-        with open(CACHE_FILE, "w") as f:
+        with open(CIK_TICKER_CACHE, "w") as f:
             json.dump(data, f)
     except:
-        with open(CACHE_FILE, "r") as f:
+        with open(CIK_TICKER_CACHE, "r") as f:
             data = json.load(f)
 
     app.state.ticker_to_cik = {
@@ -56,9 +54,6 @@ async def lifespan(app: FastAPI):
     print(f"Loaded {len(app.state.ticker_to_cik)} tickers")
 
     yield
-
-    # ---- shutdown code ----
-    print("Server shutting down")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -82,12 +77,12 @@ def search_company(query: str):
         "newsCount": 0
     }
 
-    response = requests.get(YAHOO_SEARCH_URL, params=params, headers=HEADERS_YAHOO)
-
-    if response.status_code != 200:
+    try:
+        response = requests.get(YAHOO_SEARCH_URL, params=params, headers=HEADERS_YAHOO)
+        response.raise_for_status()
+        data = response.json()
+    except: 
         return []
-
-    data = response.json()
 
     results = []
 
@@ -109,7 +104,7 @@ def search_company(query: str):
 
     return results
 
-def get_10k_data(ticker: str, cik):
+def get_10k_data(ticker: str, cik: str):
 
     ticker = ticker.upper()
 
@@ -117,24 +112,21 @@ def get_10k_data(ticker: str, cik):
  
     filepath_10k = HTML_DIR / f"{ticker}_10K.html"
 
-    if not cik: 
-        return {"error": "Ticker not found"}
-    
-    filing_url = data_extraction.get_filing_url(cik)
-
-    if not filing_url:
-        return {"error": "10-K not found"}
+    filing_url = data_extraction.get_10K_filing_url(cik)  ## Connect to the SEC API to retrieve the url of the latest 10K filing
 
     if not filepath_10k.exists():
-        filing_response = requests.get(filing_url, headers=HEADERS_SEC)
-        filepath_10k.write_bytes(filing_response.content)
-
+        
+        filing_response_10K = requests.get(filing_url, headers=HEADERS_SEC)
+        filing_response_10K.raise_for_status()
+        filepath_10k.write_bytes(filing_response_10K.content)
+    
     ## Retrieve gaap data
 
     filepath_gaap = GAAP_DIR / f"{ticker}_gaap.json"
 
     if not filepath_gaap.exists():
         gaap = data_extraction.extract_financials(ticker, cik)
+        
         with open(filepath_gaap, "w") as file:
             json.dump(gaap, file, indent=4)
 
@@ -151,10 +143,11 @@ async def company_page(request: Request, ticker: str = Query(None)):
     # Get all necessary links
 
     cik = request.app.state.ticker_to_cik.get(ticker)
+    # try:
     data = get_10k_data(ticker, cik)
+    # except Exception as e:
+    #     return HTTPException(status_code=502, detail=str(e))
 
-    if not data:
-        return f"No data found for ticker {ticker}", 404
 
     # Render the Jinja2 template with the links and ticker embedded
     return templates.TemplateResponse(

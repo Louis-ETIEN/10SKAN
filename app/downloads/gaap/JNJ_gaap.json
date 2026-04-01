@@ -396,16 +396,16 @@
         }
     },
     "market_metrics": {
-        "share_price": 238.11,
-        "shares_outstanding": 2409898936,
-        "market_cap": 573821026304,
-        "enterprise_value": 603052048384,
-        "pe_ratio": 21.607077,
-        "price_to_sales": 6.091971,
-        "price_to_book": 7.0311527,
-        "ev_to_revenue": 6.402302170904419,
-        "ev_to_fcf": 30.614887216164078,
-        "fcf_yield": 0.03432777660113897
+        "share_price": 243.345,
+        "shares_outstanding": 2408613219,
+        "market_cap": 586436902912,
+        "enterprise_value": 613607407616,
+        "pe_ratio": 22.062103,
+        "price_to_sales": 6.2259073,
+        "price_to_book": 7.185737,
+        "ev_to_revenue": 6.514363143927893,
+        "ev_to_fcf": 31.150746655294952,
+        "fcf_yield": 0.03358929136653574
     },
     "multi_year_metrics": {
         "revenue_cagr": {

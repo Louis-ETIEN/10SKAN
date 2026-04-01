@@ -12,11 +12,22 @@ HEADERS_SEC = {
     "User-Agent": "Louis Etien louis-etien@hotmail.fr"
 }
 
-def get_filing_url(cik):
+class FilingNotFoundError(Exception):
+    pass
+
+class ExternalAPIError(Exception):
+    pass
+
+def get_10K_filing_url(cik):
     submission_url = f"https://data.sec.gov/submissions/CIK{cik}.json"
 
-    r = requests.get(submission_url, headers=HEADERS_SEC)
-    data = r.json()
+    try:
+        response = requests.get(submission_url, headers=HEADERS_SEC)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        raise ExternalAPIError(f"Failed to retrieve filing url from the SEC: {e}") from e
+
+    data = response.json()
     time.sleep(0.1) # SEC has a 10 requests/sec limit
 
     filings = data["filings"]["recent"]
@@ -35,7 +46,7 @@ def get_filing_url(cik):
             break
 
     if not accession:
-        return None
+        raise FilingNotFoundError("No 10-K was found in the SEC filings.")
     
     cik_no_zero = str(int(cik))
 
@@ -73,48 +84,64 @@ def is_full_year(start, end):
 
 def get_years(facts, n_years=11):
 
-    years = set()
-
-    assets_entries = facts["facts"]["us-gaap"]["Assets"]["units"]["USD"]
-
-    entries = [e for e in assets_entries if e.get("form") == "10-K"]
-
-    for e in entries:
-        years.add(fiscal_year(e["end"]))
-
-    years = list(years) 
-
-    years.sort(reverse=True)
-
-    return years[:n_years]
-
-def get_facts(facts, tag, section, year):
-
     try:
 
+        years = set()
+
+        assets_entries = facts["facts"]["us-gaap"]["Assets"]["units"]["USD"]
+
+        entries = [e for e in assets_entries if e.get("form") == "10-K"]
+
+        for e in entries:
+            years.add(fiscal_year(e["end"]))
+
+        years = list(years) 
+
+        years.sort(reverse=True)
+
+        return years[:n_years]
+    
+    except Exception as e:
+        raise KeyError(e) from e
+
+def extract_facts(facts, tag, section, metric, years, results):
+
+    try:
         if tag in (TAG_MAP["income_statement"]["weighted_avg_shares_diluted"]):
             entries = facts["facts"]["us-gaap"][tag]["units"]["shares"]
             for e in entries:
-                #if e.get("fp") in ("FY", "Q4") and fiscal_year(e.get("end", "")) == year:
+                year = fiscal_year(e.get("end", ""))
                 if e["form"] == "10-K" and "start" in e and "end" in e and \
-                is_full_year(e["start"], e["end"]) and fiscal_year(e.get("end", "")) == year:
-                    return e.get("val")
+                is_full_year(e["start"], e["end"]) and year in years:
+                    results[year][section][metric] = e.get("val")
+                    years.remove(year)
+                    if not years: 
+                        return
                 
-        if section in ("income_statement", "cashflow_statement"):
+        elif section in ("income_statement", "cashflow_statement"):
             entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
             for e in entries:
+                year = fiscal_year(e.get("end", ""))
                 if e["form"] == "10-K" and "start" in e and "end" in e and \
-                is_full_year(e["start"], e["end"]) and fiscal_year(e.get("end", "")) == year:
-                    return e.get("val")
+                is_full_year(e["start"], e["end"]) and fiscal_year(e.get("end", "")) in years:
+                    results[year][section][metric] = e.get("val")
+                    years.remove(year)
+                    if not years:
+                        return
+
         else:
             entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
             for e in entries:
-                if e["form"] == "10-K" and fiscal_year(e.get("end", "")) == year:
-                    return e.get("val")
-        return None
+                year = fiscal_year(e.get("end", ""))
+                if e["form"] == "10-K" and year in years:
+                    results[year][section][metric] = e.get("val")
+                    years.remove(year)
+                    if not years: 
+                        return
 
     except KeyError:
-        return None
+        return
+        
     
 def extract_financials(ticker, cik, n_years=11):
 
@@ -130,27 +157,24 @@ def extract_financials(ticker, cik, n_years=11):
 
     results["multi_year_metrics"] = SCHEMA_MYM
 
+    for section in TAG_MAP:
+
+        for metric in TAG_MAP[section]:
+
+            tags = TAG_MAP[section][metric]
+
+            tag_years = years.copy()
+
+            for tag in tags:
+
+                if not tag_years: 
+                    break
+
+                extract_facts(facts, tag, section, metric, tag_years, results)
+        
+    # Backup computations if the tags were not all assigned by the company
     for year in years:
         result = results[year]
-
-        for section in TAG_MAP:
-
-            for metric in TAG_MAP[section]:
-
-                tags = TAG_MAP[section][metric]
-
-                for tag in tags:
-
-                    value = get_facts(facts, tag, section, year)
-
-                    if value is not None:
-                        result[section][metric] = value
-                        break
-        
-
-
-        # Backup computations if the tags were not all assigned by the company
-
         if result["cashflow_statement"]["operating_cash_flow"] and \
         result["cashflow_statement"]["capex"]:
 
@@ -284,7 +308,6 @@ def compute_multi_year_metrics(results, years):
     n = len(years)
 
     def get(path, year):
-        """Safely retrieve nested values"""
         try:
             v = results[year]
             for p in path:
@@ -401,12 +424,11 @@ if __name__ == "__main__":
     #     for tag in TAG_MAP["income_statement"][metric]:
     #         print(get_facts(facts, tag, "income_statement", "2023"))
     facts= get_company_facts("0001065280")
-    for tag in TAG_MAP["income_statement"]["weighted_avg_shares_diluted"]:
-        entries = facts["facts"]["us-gaap"][tag]["units"]["shares"]
-        print(tag)
-        for e in entries:
-            if "start" in e and "end" in e and is_full_year(e["start"], e["end"]):
-                print(json.dumps(e, indent=4))
+    entries = facts["facts"]["us-gaap"]["CashAndCashEquivalentsAtCarryingValue"]["units"]["USD"]
+    print("CashAndDueFromBanks")
+    for e in entries:
+        if "end" in e:
+            print(json.dumps(e, indent=4))
     
     #print(get_years(facts, 11))
     #print(json.dumps(get_years(facts, 10), indent=4))
