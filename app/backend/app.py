@@ -9,13 +9,12 @@ from contextlib import asynccontextmanager
 import requests
 import json
 from pathlib import Path
-import data_extraction
-from data_extraction import ExternalAPIError, FilingNotFoundError
+from financial_data import Financial_data
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DOWNLOAD_DIR = BASE_DIR / "downloads"
 HTML_DIR = DOWNLOAD_DIR / "html"
-GAAP_DIR = DOWNLOAD_DIR / "gaap"
+FINANCIALS_DIR = DOWNLOAD_DIR / "financials"
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 
@@ -59,7 +58,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.mount("/downloads", StaticFiles(directory=DOWNLOAD_DIR), name="downloads")
 app.mount("/downloads/html", StaticFiles(directory=HTML_DIR), name="html")
-app.mount("/downloads/gaap", StaticFiles(directory=GAAP_DIR), name="gaap")
+app.mount("/downloads/financials", StaticFiles(directory=FINANCIALS_DIR), name="financials")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/", response_class=HTMLResponse)
@@ -104,36 +103,6 @@ def search_company(query: str):
 
     return results
 
-def get_10k_data(ticker: str, cik: str):
-
-    ticker = ticker.upper()
-
-    ## Retrieve 10k
- 
-    filepath_10k = HTML_DIR / f"{ticker}_10K.html"
-
-    filing_url = data_extraction.get_10K_filing_url(cik)  ## Connect to the SEC API to retrieve the url of the latest 10K filing
-
-    if not filepath_10k.exists():
-        
-        filing_response_10K = requests.get(filing_url, headers=HEADERS_SEC)
-        filing_response_10K.raise_for_status()
-        filepath_10k.write_bytes(filing_response_10K.content)
-    
-    ## Retrieve gaap data
-
-    filepath_gaap = GAAP_DIR / f"{ticker}_gaap.json"
-
-    if not filepath_gaap.exists():
-        gaap = data_extraction.extract_financials(ticker, cik)
-        
-        with open(filepath_gaap, "w") as file:
-            json.dump(gaap, file, indent=4)
-
-    return {"download_url": filing_url,
-            "preview_url": f"/downloads/html/{ticker}_10K.html", 
-            "gaap_url": f"downloads/gaap/{ticker}_gaap.json"}
-
 @app.get("/company")
 async def company_page(request: Request, ticker: str = Query(None)):
     if not ticker:
@@ -148,7 +117,6 @@ async def company_page(request: Request, ticker: str = Query(None)):
     # except Exception as e:
     #     return HTTPException(status_code=502, detail=str(e))
 
-
     # Render the Jinja2 template with the links and ticker embedded
     return templates.TemplateResponse(
         "company.html",
@@ -157,14 +125,13 @@ async def company_page(request: Request, ticker: str = Query(None)):
             "ticker": ticker,
             "preview_url": data['preview_url'],
             "download_url": data['download_url'],
-            "gaap_url": data['gaap_url'],
         }
     )
     
 @app.get("/financials")
 def financials_page(request: Request, ticker: str):
 
-    json_path = GAAP_DIR / f"{ticker}_gaap.json"
+    json_path = FINANCIALS_DIR / f"{ticker}_financials.json"
 
     if not json_path.exists():
         return f"No financial data found for {ticker}", 404
@@ -185,6 +152,30 @@ def financials_page(request: Request, ticker: str):
             "years": years
         }
     )
+
+def get_10k_data(ticker: str, cik: str):
+
+    ticker = ticker.upper()
+    filepath_10k = HTML_DIR / f"{ticker}_10K.html"
+    filepath_financials = FINANCIALS_DIR / f"{ticker}_financials.json"
+
+    # Get the url of the last 10K filing
+    filing_url = Financial_data.get_10K_filing_url(cik)
+
+    # Download the latest 10K if it's not cached
+    if not filepath_10k.exists():
+        filing_response_10K = requests.get(filing_url, headers=HEADERS_SEC)
+        filing_response_10K.raise_for_status()
+        filepath_10k.write_bytes(filing_response_10K.content)
+
+    # Fetch and compute the financial data of the company if not cached
+    if not filepath_financials.exists():
+        financials = Financial_data.from_ticker_cik(ticker, cik, 11)
+        financials.save_financials()
+
+    return {"download_url": filing_url,
+            "preview_url": f"/downloads/html/{ticker}_10K.html", 
+            "financials_url": f"downloads/financials/{ticker}_financials.json"}
 
 if __name__ == "__main__":
     get_10k_data(ticker="AAPL", cik="0000320193")

@@ -2,6 +2,7 @@ from schema import SCHEMA, SCHEMA_MM, SCHEMA_MYM
 from tag_map import TAG_MAP
 import requests
 import yfinance as yf
+import time
 from copy import deepcopy
 import json
 from datetime import datetime
@@ -13,6 +14,12 @@ HEADERS_SEC = {
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FINANCIALS_DIR = BASE_DIR / "downloads" / "financials"
+
+class FilingNotFoundError(Exception):
+    pass
+
+class ExternalAPIError(Exception):
+    pass
 
 class Financial_data:
     def __init__(self, ticker, cik, n_years):
@@ -30,6 +37,7 @@ class Financial_data:
         finances._build_template()
         finances._extract_finances(facts)
         finances._compute_backup_metrics()
+        #finances._compute_ROIC2(facts)
         finances._compute_derived_metrics()
         finances._fetch_market_metrics()
         finances._compute_multi_year_metrics()
@@ -123,7 +131,6 @@ class Financial_data:
                             if not metric_years: 
                                 return # Found the metric for all years
                             
-
                 # For balance sheet metrics, the start data is not provided, so we cannot (and don't need)
                 # to double check
                 else:
@@ -198,28 +205,154 @@ class Financial_data:
             # per-share
             if weighted_avg_shares_diluted and weighted_avg_shares_diluted != 0:
                 if net_income:
-                    dm["earnings_per_share"] = net_income / weighted_avg_shares_diluted
+                    dm["diluted_eps"] = net_income / weighted_avg_shares_diluted
                 if free_cash_flow:
-                    dm["fcf_per_share"] = free_cash_flow / weighted_avg_shares_diluted
+                    dm["diluted_fcf_per_share"] = free_cash_flow / weighted_avg_shares_diluted
 
             # Returns
-
             if net_income and total_assets and total_assets != 0:
                 dm["return_on_assets"] = net_income / total_assets
             if net_income and equity and equity != 0:
                 dm["return_on_equity"] = net_income / equity
 
             # Efficiency
-
             if revenue and total_assets and total_assets != 0:
                 dm["asset_turnover"] = revenue / total_assets
 
             # Cash metrics
-
             if operating_cash_flow and net_income and net_income != 0:
                 dm["cash_conversion"] = operating_cash_flow / net_income
             if capex and revenue and revenue !=0:
                 dm["capex_ratio"] = capex / revenue
+
+    def _compute_ROIC(self, facts):
+        # retrieve the tax rate
+        tax_rate_years = self.years.copy()
+        for tag in TAG_MAP["income_statement"]["tax_rate"]:
+            try: 
+                entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
+                for e in entries:
+                    year = fiscal_year(e.get("end", ""))
+                    if e["form"] == "10-K" and year in tax_rate_years:
+                        self.financials[year]["income_statement"]["tax_rate"] = e.get("val")
+                        tax_rate_years.remove(year)
+                        if not tax_rate_years: 
+                            break
+            except:
+                continue
+
+        if tax_rate_years:
+            tax_expense_years = tax_rate_years.copy()
+            pretax_years = tax_rate_years.copy()
+            for tag in TAG_MAP["income_statement"]["income_tax_expense"]:
+                try:
+                    entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
+                    for e in entries:
+                        year = fiscal_year(e.get("end", ""))
+                        if e["form"] == "10-K" and year in tax_expense_years:
+                            self.financials[year]["income_statement"]["income_tax_expense"] = e.get("val")
+                            tax_expense_years.remove(year)
+                            if not tax_expense_years:
+                                break
+                except:
+                    continue
+            for tag in TAG_MAP["income_statement"]["pretax_income"]:
+                try:
+                    entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
+                    for e in entries:
+                        year = fiscal_year(e.get("end", ""))
+                        if e["form"] == "10-K" and year in pretax_years:
+                            self.financials[year]["income_statement"]["pretax_income"] = e.get("val")
+                            pretax_years.remove(year)
+                            if not pretax_years:
+                                break
+                except:
+                    continue
+
+        for year in self.years:
+            if self.financials[year]["income_statement"]["tax_rate"] == None:
+                income_tax_expense = self.financials[year]["income_statement"]["income_tax_expense"]
+                pretax_income = self.financials[year]["income_statement"]["pretax_income"]
+                if income_tax_expense != None and income_tax_expense != 0 and \
+                        pretax_income != None and pretax_income > 0:
+                    
+                    self.financials[year]["income_statement"]["tax_rate"] = round(income_tax_expense / pretax_income, 2)
+
+            if self.financials[year]["income_statement"]["tax_rate"] == None:
+                self.financials[year]["income_statement"]["tax_rate"] = 0.21
+                    
+        # retrieve the Debt
+        debt_years = self.years.copy()
+        for tag in TAG_MAP["balance_sheet"]["debt"]:
+            print(tag)
+            try: 
+                entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
+                for e in entries:
+                    print(json.dumps(e, indent=4))
+                    year = fiscal_year(e.get("end", ""))
+                    if e["form"] == "10-K" and year in debt_years:
+                        self.financials[year]["balance_sheet"]["debt"] = e.get("val")
+                        debt_years.remove(year)
+                        if not debt_years: 
+                            break
+            except:
+                continue
+
+        # fallback: add long-term and short-term debt
+
+        if debt_years:
+            debt_current_years = debt_years.copy()
+            debt_noncurrent_years = debt_years.copy()
+            for tag in TAG_MAP["balance_sheet"]["debt_current"]:
+                try:
+                    entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
+                    for e in entries:
+                        year = fiscal_year(e.get("end", ""))
+                        if e["form"] == "10-K" and year in debt_current_years:
+                            self.financials[year]["balance_sheet"]["debt_current"] = e.get("val")
+                            debt_current_years.remove(year)
+                            if not debt_current_years:
+                                break
+                except:
+                    continue
+
+            for tag in TAG_MAP["balance_sheet"]["debt_noncurrent"]:
+                try:
+                    entries = facts["facts"]["us-gaap"][tag]["units"]["USD"]
+                    for e in entries:
+                        year = fiscal_year(e.get("end", ""))
+                        if e["form"] == "10-K" and year in debt_noncurrent_years:
+                            self.financials[year]["balance_sheet"]["debt_noncurrent"] = e.get("val")
+                            debt_noncurrent_years.remove(year)
+                            if not debt_noncurrent_years:
+                                break
+                except:
+                    continue
+
+        for year in self.years:
+            if self.financials[year]["balance_sheet"]["debt"] == None:
+                debt_current = self.financials[year]["balance_sheet"]["debt_current"]
+                debt_noncurrent = self.financials[year]["balance_sheet"]["debt_noncurrent"]
+                if debt_current != None and debt_noncurrent != None:
+                    self.financials[year]["balance_sheet"]["debt"] = debt_current + debt_noncurrent
+
+        # Compute the ROIC for each year
+            
+        for year in self.years[:-2]:
+            tax_rate = self.financials[year]["income_statement"]["tax_rate"]
+            operating_income = self.financials[year]["income_statement"]["operating_income"]
+            shareholders_equity_t1 = self.financials[str(int(year) - 1)]["balance_sheet"]["shareholders_equity"]
+            debt_t1 = self.financials[str(int(year) - 1)]["balance_sheet"]["debt"]
+            cash_t1 = self.financials[str(int(year) - 1)]["balance_sheet"]["cash"]
+            shareholders_equity_t2 = self.financials[year]["balance_sheet"]["shareholders_equity"]
+            debt_t2 = self.financials[year]["balance_sheet"]["debt"]
+            cash_t2 = self.financials[year]["balance_sheet"]["cash"]
+
+            #if tax_rate and operating_income and shareholders_equity and debt and cash: 
+            self.financials[year]["derived_metrics"]["return_on_invested_capital"] = round((1 - tax_rate) * operating_income / ((shareholders_equity_t1 + debt_t1 - cash_t1) + (shareholders_equity_t2 + debt_t2 - cash_t2)) * 2, 2)
+
+    def _compute_ROIC2(self, facts):
+        return
 
     def _fetch_market_metrics(self):
 
@@ -365,6 +498,41 @@ class Financial_data:
                 variance = sum((g - mean) ** 2 for g in growth_rates) / 10
                 mym["revenue_volatility"]["10y"] = variance ** 0.5
 
+    @staticmethod
+    def get_10K_filing_url(cik):
+        submission_url = f"https://data.sec.gov/submissions/CIK{cik}.json"
+
+        try:
+            response = requests.get(submission_url, headers=HEADERS_SEC)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            raise ExternalAPIError(f"Failed to retrieve filing url from the SEC: {e}") from e
+
+        data = response.json()
+        time.sleep(0.1) # SEC has a 10 requests/sec limit
+
+        filings = data["filings"]["recent"]
+
+        forms = filings["form"]
+        accessions = filings["accessionNumber"]
+        documents = filings["primaryDocument"]
+
+        accession = None
+        document = None
+
+        for i, form in enumerate(forms):
+            if form == "10-K":
+                accession = accessions[i].replace("-", "")
+                document = documents[i]
+                break
+
+        if not accession:
+            raise FilingNotFoundError("No 10-K was found in the SEC filings.")
+        
+        cik_no_zero = str(int(cik))
+
+        return f"https://www.sec.gov/Archives/edgar/data/{cik_no_zero}/{accession}/{document}"
+
 def fiscal_year(end):
 
     d = datetime.strptime(end, "%Y-%m-%d")
@@ -387,9 +555,11 @@ def compute_cagr(valuet0, valuet1, deltat):
     
 
 if __name__ == "__main__":
-    apple_finances = Financial_data.from_ticker_cik("AAPL", "0000320193", 11)
-    apple_finances.save_financials()
-    #apple_finances.print_financials()
+    # apple_finances = Financial_data.from_ticker_cik("AAPL", "0000320193", 11)
+    # apple_finances.save_financials()
+    apple_finances = Financial_data("AAPL", "0000320193", 1)
+    with open(FINANCIALS_DIR / "company_facts", "w") as file:
+        json.dump(apple_finances._get_facts(),file, indent=4)
 
     
 

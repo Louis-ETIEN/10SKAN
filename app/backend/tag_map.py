@@ -59,6 +59,25 @@ TAG_MAP = {
         "WeightedAverageNumberOfCommonSharesOutstandingDiluted"
     ],
 
+    "tax_rate": [
+        "EffectiveIncomeTaxRateContinuingOperations"
+    ],
+
+    "income_tax_expense": [
+        "IncomeTaxExpenseBenefit"
+    ],
+
+
+    "pretax_income": [
+        "IncomeBeforeTaxExpenseBenefit",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxes",
+        "PretaxIncome",
+        "EarningsBeforeTax",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterest",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+    ]
+
 },
 
 "balance_sheet": {
@@ -66,9 +85,6 @@ TAG_MAP = {
     "cash": [
         "CashAndCashEquivalentsAtCarryingValue",
         "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
-        "CashAndDueFromBanks",
-        "Cash",
-        "CashEquivalentsAtCarryingValue"
     ],
 
     "accounts_receivable": [
@@ -82,10 +98,7 @@ TAG_MAP = {
     "inventory": [
         "InventoryNet",
         "InventoriesNet",
-        "InventoryFinishedGoods",
         "InventoryGross",
-        "InventoryRawMaterials",
-        "InventoryWorkInProcess"
     ],
 
     "total_assets": [
@@ -105,8 +118,60 @@ TAG_MAP = {
         "StockholdersEquityAttributableToParent",
         "StockholdersEquityIncludingPortionAttributableToParent",
         "Equity"
-    ]
+    ],
 
+    "debt": [
+        "Debt",
+        "DebtAndCapitalLeaseObligations",
+        "DebtAndFinanceLeaseObligations",
+        "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities",
+        "LongTermDebtAndFinanceLeaseObligationsIncludingCurrentMaturities"
+    ],
+
+    "debt_current": [
+        "DebtCurrent",
+        "LongTermDebtAndFinanceLeaseObligationsCurrent",
+        "LongTermDebtAndCapitalLeaseObligationsCurrent",
+        "LongTermDebtCurrent",
+        "ShortTermBorrowings",
+        "CommercialPaper"
+    ],
+
+    "debt_noncurrent": [
+        "LongTermDebtAndFinanceLeaseObligations",
+        "LongTermDebtAndCapitalLeaseObligations",
+        "LongTermDebtNoncurrent",
+        "LongTermDebt"
+    ],
+
+    "accounts_payable": [
+        "AccountsPayable",
+        "AccountsPayableCurrent",
+        "AccountsPayableTradeCurrent"
+    ],
+
+    "accrued_liabilities": [
+        "AccruedLiabilities",
+        "AccruedLiabilitiesCurrent",
+        "OtherAccruedLiabilitiesCurrent"
+        "AccruedExpensesAndOtherCurrentLiabilities"
+    ],
+
+    "accounts_payable+accrued_liabilities": [
+        "AccountsPayableAndAccruedLiabilitiesCurrent",
+        "AccountsPayableAndOtherAccruedLiabilitiesCurrent",
+    ],
+
+    "deferred_revenue": [
+        "ContractWithCustomerLiabilityCurrent",
+        "DeferredRevenueCurrent",
+        "CustomerAdvancesCurrent"
+    ],
+
+    "taxes_payable": [
+        "IncomeTaxesPayableCurrent",
+        "TaxesPayableCurrent"
+    ]
 },
 
 "cashflow_statement": {

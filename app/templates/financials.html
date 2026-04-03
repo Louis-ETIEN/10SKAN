@@ -205,6 +205,13 @@
     <caption>Cashflow Statement - USD millions</caption>
 
     <tr>
+        <th>Metric</th>
+        {% for year in years %}
+        <th>{{ year }}</th>
+        {% endfor %}
+    </tr>
+
+    <tr>
         <th>Operating Cash Flow</th>
         {% for year in years %}
         <td>{{ format_millions(financials[year].cashflow_statement.operating_cash_flow) }}</td>
@@ -242,7 +249,7 @@
 
     <!-- Margins -->
     <tr>
-        <th colspan="{{ years|length + 1 }}" style="text-align:left;">Margins</th>
+        <th colspan="{{ years|length + 1 }}" style="text-align:center;font-weight:normal;">Margins</th>
     </tr>
 
     <tr>
@@ -275,26 +282,26 @@
 
     <!-- Shares -->
     <tr>
-        <th colspan="{{ years|length + 1 }}" style="text-align:left;">Margins</th>
+        <th colspan="{{ years|length + 1 }}" style="text-align:center;font-weight:normal;">Per Share</th>
     </tr>
 
     <tr>
-        <th>Earnings per share</th>
+        <th>Diluted EPS</th>
         {% for year in years %}
-        <td>${{ format_value(financials[year].derived_metrics.earnings_per_share) }}</td>
+        <td>${{ format_value(financials[year].derived_metrics.diluted_eps) }}</td>
         {% endfor %}
     </tr>
 
     <tr>
-        <th>Free cash flow per share</th>
+        <th>Diluted FCF per share</th>
         {% for year in years %}
-        <td>${{ format_value(financials[year].derived_metrics.fcf_per_share) }}</td>
+        <td>${{ format_value(financials[year].derived_metrics.diluted_fcf_per_share) }}</td>
         {% endfor %}
     </tr>
 
     <!-- Returns -->
     <tr>
-        <th colspan="{{ years|length + 1 }}" style="text-align:left;">Returns</th>
+        <th colspan="{{ years|length + 1 }}" style="text-align:center;font-weight:normal;">Returns</th>
     </tr>
 
     <tr>
@@ -313,7 +320,7 @@
 
     <!-- Efficiency -->
     <tr>
-        <th colspan="{{ years|length + 1 }}" style="text-align:left;">Efficiency</th>
+        <th colspan="{{ years|length + 1 }}" style="text-align:center;font-weight:normal;">Efficiency</th>
     </tr>
 
     <tr>

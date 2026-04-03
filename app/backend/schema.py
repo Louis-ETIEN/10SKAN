@@ -6,7 +6,10 @@ SCHEMA = {
         "gross_profit": None,
         "operating_income": None,
         "net_income": None,
-        "weighted_avg_shares_diluted": None
+        "weighted_avg_shares_diluted": None,
+        "tax_rate": None,
+        "income_tax_expense": None,
+        "pretax_income": None
     },
 
     "balance_sheet": {
@@ -15,7 +18,15 @@ SCHEMA = {
         "inventory": None,
         "total_assets": None,
         "total_liabilities": None,
-        "shareholders_equity": None
+        "shareholders_equity": None,
+        "debt": None,
+        "debt_current": None,
+        "debt_noncurrent": None,
+        "accounts_payable": None,
+        "accrued_liabilities": None,
+        "accounts_payable+accrued_liabilities": None,
+        "deferred_revenue": None,
+        "taxes_payable": None,
     },
 
     "cashflow_statement": {
@@ -33,12 +44,14 @@ SCHEMA = {
         "fcf_margin": None,
 
         # per-share
-        "earnings_per_share": None,
-        "fcf_per_share": None,
+        "diluted_eps": None,
+        "diluted_fcf_per_share": None,
 
         # returns
         "return_on_assets": None,
         "return_on_equity": None,
+        "return_on_invested_capital": None,
+        "return_on_operating_capital": None,
 
         # efficiency
         "asset_turnover": None,
